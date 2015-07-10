@@ -358,7 +358,7 @@ var TouchControls = function() {
 
   var gutterWidth = 10;
   var unitWidth = Game.width/5;
-  var blockWidth = unitWidth-gutterWidth;
+  var blockWidth = (unitWidth-gutterWidth);
 
   this.drawSquare = function(ctx,x,y,txt,on) {
     ctx.globalAlpha = on ? 0.9 : 0.6;
@@ -392,10 +392,10 @@ var TouchControls = function() {
     var touch, x, y;
 
     e.preventDefault();
-    
+	console.log(e);    
 
     if(e.type == 'touchstart' || e.type == 'touchend') {
-      for(i=0;i<e.changedTouches.length;i++) {
+      for(i=0;i<e.targetTouches.length;i++) {
         touch = e.changedTouches[i];
         x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
         y = touch.pageY / Game.canvasMultiplier - Game.canvas.offsetLeft;
@@ -407,8 +407,6 @@ var TouchControls = function() {
   };
 
   Game.canvas.addEventListener('touchstart',this.trackTouch,true);
-  Game.canvas.addEventListener('touchmove',this.trackTouch,true);
-  Game.canvas.addEventListener('touchend',this.trackTouch,true);
 
   // For Android
   Game.canvas.addEventListener('dblclick',function(e) { e.preventDefault(); },true);
