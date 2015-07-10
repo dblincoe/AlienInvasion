@@ -145,18 +145,30 @@ var PlayerShip = function() {
   this.reload = this.reloadTime;
   this.x = Game.width/2 - this.w / 2;
   this.y = Game.height - Game.playerOffset - this.h;
+	
+  
 
   this.step = function(dt) {
-    if(Game.keys['left']) { this.vx = -this.maxVel; }
+	/*if(Game.keys['left']) { this.vx = -this.maxVel; }
     else if(Game.keys['right']) { this.vx = this.maxVel; }
     else { this.vx = 0; }
-
-    this.x += this.vx * dt;
-
-    if(this.x < 0) { this.x = 0; }
-    else if(this.x > Game.width - this.w) { 
-      this.x = Game.width - this.w;
+*/
+	Game.canvas.addEventListener('touchmove',this.touchMove,false);
+    
+	var touchMoveX;
+	  
+	this.touchMove = function(evt) {
+      touch = evt.changedTouches[0];
     }
+	
+	if(typeof touch !== 'undefined') {
+	  touchMoveX = touch.pageX;
+	  console.log(touchMoveX);
+	  this.x = touchMoveX / Game.canvasMultiplier - Game.canvas.offsetLeft;
+	} else {
+	  this.x = Game.width/2 - this.w / 2;
+	}
+	
 
     this.reload-=dt;
     if(Game.keys['fire'] && this.reload < 0) {
@@ -299,5 +311,3 @@ Explosion.prototype.step = function(dt) {
 window.addEventListener("load", function() {
   Game.initialize("game",sprites,startGame);
 });
-
-

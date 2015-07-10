@@ -379,9 +379,8 @@ var TouchControls = function() {
   this.draw = function(ctx) {
     ctx.save();
 
-    var yLoc = Game.height - unitWidth;
-    this.drawSquare(ctx,gutterWidth,yLoc,"\u25C0", Game.keys['left']);
-    this.drawSquare(ctx,unitWidth + gutterWidth,yLoc,"\u25B6", Game.keys['right']);
+    yLoc = Game.height - unitWidth;
+    
     this.drawSquare(ctx,4*unitWidth,yLoc,"A",Game.keys['fire']);
 
     ctx.restore();
@@ -389,28 +388,18 @@ var TouchControls = function() {
 
   this.step = function(dt) { };
 
-  this.trackTouch = function(e) {
-    var touch, x;
+  this.trackTouch = function(e,ctx) {
+    var touch, x, y;
 
     e.preventDefault();
-    Game.keys['left'] = false;
-    Game.keys['right'] = false;
-    for(var i=0;i<e.targetTouches.length;i++) {
-      touch = e.targetTouches[i];
-      x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
-      if(x < unitWidth) {
-        Game.keys['left'] = true;
-      } 
-      if(x > unitWidth && x < 2*unitWidth) {
-        Game.keys['right'] = true;
-      } 
-    }
+    
 
     if(e.type == 'touchstart' || e.type == 'touchend') {
       for(i=0;i<e.changedTouches.length;i++) {
         touch = e.changedTouches[i];
         x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
-        if(x > 4 * unitWidth) {
+        y = touch.pageY / Game.canvasMultiplier - Game.canvas.offsetLeft;
+        if(x > 4 * unitWidth && y > yLoc) {
           Game.keys['fire'] = (e.type == 'touchstart');
         }
       }
