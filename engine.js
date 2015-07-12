@@ -28,8 +28,9 @@ var Game = new function() {
   var boards = [];
 
   // Game Initialization
-  this.initialize = function(canvasElementId,sprite_data,callback) {
+  this.initialize = function(canvasElementId,buttonElementId,sprite_data,callback) {
     this.canvas = document.getElementById(canvasElementId);
+	
 
     this.playerOffset = 10;
     this.canvasMultiplier= 1;
@@ -50,6 +51,7 @@ var Game = new function() {
     }
 
     SpriteSheet.load(sprite_data,callback);
+	//ShipHealth.load(callback);
   };
   
 
@@ -58,7 +60,7 @@ var Game = new function() {
   this.keys = {};
 
   this.setupInput = function() {
-    window.addEventListener('keydown',function(e) {
+   /* window.addEventListener('keydown',function(e) {
       if(KEY_CODES[e.keyCode]) {
        Game.keys[KEY_CODES[e.keyCode]] = true;
        e.preventDefault();
@@ -70,7 +72,7 @@ var Game = new function() {
        Game.keys[KEY_CODES[e.keyCode]] = false; 
        e.preventDefault();
       }
-    },false);
+    },false);*/
   };
 
 
@@ -138,20 +140,45 @@ var Game = new function() {
 };
 
 
+
 var SpriteSheet = new function() {
   this.map = { }; 
+  
+  this.sources = {
+        image: '/RandInvader/images/sprites.png',
+        health: '/RandInvader/images/heart.png'
+      };
 
   this.load = function(spriteData,callback) { 
     this.map = spriteData;
-    this.image = new Image();
+	this.images = {};
+    var loadedImages = 0;
+    var numImages = 0;
+    // get num of source
+	for(var src in this.sources) {
+      numImages++;
+    }
+	for(var src in this.sources) {
+      this.images[src] = new Image();
+      this.images[src].onload = function() {
+        if(++loadedImages >= numImages) {
+          callback(this.images);
+        }
+      };
+      this.images[src].src = this.sources[src];
+    };
+    /*this.image = new Image();
     this.image.onload = callback;
     this.image.src = 'images/sprites.png';
+	this.health = new Image();
+    this.health.onload = callback;
+    this.health.src = 'images/heart.png';*/
   };
 
   this.draw = function(ctx,sprite,x,y,frame) {
     var s = this.map[sprite];
     if(!frame) frame = 0;
-    ctx.drawImage(this.image,
+    ctx.drawImage(this.images.image,
                      s.sx + frame * s.w, 
                      s.sy, 
                      s.w, s.h, 
@@ -172,11 +199,11 @@ var TitleScreen = function TitleScreen(title,subtitle,callback) {
   this.draw = function(ctx) {
     ctx.fillStyle = "#FFFFFF";
 
-    ctx.font = "bold 40px bangers";
+    ctx.font = "bold 22px bangers";
     var measure = ctx.measureText(title);  
     ctx.fillText(title,Game.width/2 - measure.width/2,Game.height/2);
 
-    ctx.font = "bold 20px bangers";
+    ctx.font = "bold 13px bangers";
     var measure2 = ctx.measureText(subtitle);
     ctx.fillText(subtitle,Game.width/2 - measure2.width/2,Game.height/2 + 40);
   };
@@ -381,36 +408,38 @@ var TouchControls = function() {
 
     yLoc = Game.height - unitWidth;
     
-    this.drawSquare(ctx,4*unitWidth,yLoc,"A",Game.keys['fire']);
+    //this.drawSquare(ctx,4*unitWidth,yLoc,"A",Game.keys['fire']);
 
     ctx.restore();
   };
 
   this.step = function(dt) { };
 
-  this.trackTouch = function(e,ctx) {
+  this.trackTouch = function(ctx) {
     var touch, x, y;
 
-    e.preventDefault();
-	console.log(e);    
+    
 
-    if(e.type == 'touchstart' || e.type == 'touchend') {
-      for(i=0;i<e.targetTouches.length;i++) {
+    /*if(e.type == 'touchstart' || e.type == 'touchend') {
+      for(i=0;i<e.changedTouches.length;i++) {
         touch = e.changedTouches[i];
+		
         x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
-        y = touch.pageY / Game.canvasMultiplier - Game.canvas.offsetLeft;
-        if(x > 4 * unitWidth && y > yLoc) {
+        y = touch.pageY / Game.canvasMultiplier;
+		console.log(4 * unitWidth + " " + yLoc);
+		  console.log(Game.canvasMultiplier);
+		  console.log(e);
+		console.log(x + " : " + y);
+        if(x > 3 * unitWidth && y > yLoc/1.3) {
           Game.keys['fire'] = (e.type == 'touchstart');
         }
       }
-    }
+    }*/
   };
 
-  Game.canvas.addEventListener('touchstart',this.trackTouch,true);
 
   // For Android
-  Game.canvas.addEventListener('dblclick',function(e) { e.preventDefault(); },true);
-  Game.canvas.addEventListener('click',function(e) { e.preventDefault(); },true);
+  
 
   Game.playerOffset = unitWidth + 20;
 };
@@ -436,4 +465,22 @@ var GamePoints = function() {
   };
 
   this.step = function(dt) { };
+};
+
+var ShipHealth = function() {
+	
+	/*this.load = function(callback) { 
+      this.image = new Image();
+      this.image.onload = callback;
+      this.image.src = 'images/heart.png';
+    };*/
+
+	this.draw = function(ctx) {
+      var numOfLives = health/10;	
+	    for(var i=0; i<numOfLives;i++) {
+		  ctx.drawImage(SpriteSheet.images.health, window.innerWidth - 20 - (i*30), 10);
+	    };
+	};
+
+    this.step = function(dt) { };
 };
