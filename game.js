@@ -1,24 +1,24 @@
 var sprites = {
- ship: { sx: 0, sy: 0, w: 50, h: 26, frames: 1 },
- missile: { sx: 0, sy: 37, w: 12, h: 28, frames: 1 },
- enemy_jeb: { sx: 70, sy: 0, w: 50, h: 28, frames: 1 },
- enemy_hillary: { sx: 120, sy: 0, w: 50, h: 43, frames: 1 },
- enemy_cruz: { sx: 170, sy: 0, w: 26, h: 39, frames: 1 },
- enemy_trump: { sx: 196, sy: 0, w: 60, h: 23, frames: 1 },
- explosion: { sx: 0, sy: 68, w: 64, h: 64, frames: 12 },
- enemy_missile: { sx: 27, sy: 42, w: 20, h: 20, frame: 1, }
+ ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
+ missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 },
+ enemy_purple: { sx: 37, sy: 0, w: 42, h: 43, frames: 1 },
+ enemy_bee: { sx: 79, sy: 0, w: 37, h: 43, frames: 1 },
+ enemy_ship: { sx: 116, sy: 0, w: 42, h: 43, frames: 1 },
+ enemy_circle: { sx: 158, sy: 0, w: 32, h: 33, frames: 1 },
+ explosion: { sx: 0, sy: 64, w: 64, h: 64, frames: 12 },
+ enemy_missile: { sx: 9, sy: 42, w: 3, h: 20, frame: 1, }
 };
 
 var enemies = {
-  straight: { x: 0,   y: -50, sprite: 'enemy_cruz', health: 10, 
+  straight: { x: 0,   y: -50, sprite: 'enemy_ship', health: 10, 
               E: 100 },
-  ltr:      { x: 0,   y: -100, sprite: 'enemy_trump', health: 10, 
-              B: 75, C: 1, E: 100, missiles: 1  },
-  circle:   { x: 250,   y: -50, sprite: 'enemy_cruz', health: 10, 
+  ltr:      { x: 0,   y: -100, sprite: 'enemy_purple', health: 10, 
+              B: 75, C: 1, E: 100, missiles: 2  },
+  circle:   { x: 250,   y: -50, sprite: 'enemy_circle', health: 10, 
               A: 0,  B: -100, C: 1, E: 20, F: 100, G: 1, H: Math.PI/2 },
-  wiggle:   { x: 100, y: -50, sprite: 'enemy_hillary', health: 10, 
-              B: 50, C: 4, E: 100, firePercentage: 0.001, missiles: 1},
-  step:     { x: 0,   y: -50, sprite: 'enemy_jeb', health: 10,
+  wiggle:   { x: 100, y: -50, sprite: 'enemy_bee', health: 20, 
+              B: 50, C: 4, E: 100, firePercentage: 0.001, missiles: 2 },
+  step:     { x: 0,   y: -50, sprite: 'enemy_circle', health: 10,
               B: 150, C: 1.2, E: 75 }
 };
 
@@ -39,10 +39,9 @@ var startGame = function() {
     Game.setBoard(1,new Starfield(50,0.6,100));
     Game.setBoard(2,new Starfield(100,1.0,50));
   }  
-  /*Game.setBoard(3,new TitleScreen("Alien Invasion", 
+  Game.setBoard(3,new TitleScreen("Alien Invasion", 
                                   "Press fire to start playing",
-                                  playGame));*/
-  playGame();
+                                  playGame));
 };
 
 var level1 = [
@@ -65,7 +64,6 @@ var playGame = function() {
   board.add(new Level(level1,winGame));
   Game.setBoard(3,board);
   Game.setBoard(5,new GamePoints(0));
-  Game.setBoard(6,new ShipHealth());
 };
 
 var winGame = function() {
@@ -75,8 +73,8 @@ var winGame = function() {
 };
 
 var loseGame = function() {
-  Game.setBoard(3,new TitleScreen("You have not defeated your inferiors!", 
-                                  "Assuage your guilt and make a donation to the campaign!",
+  Game.setBoard(3,new TitleScreen("You lose!", 
+                                  "Press fire to play again",
                                   playGame));
 };
 
@@ -142,8 +140,8 @@ var Starfield = function(speed,opacity,numStars,clear) {
 };
 
 var PlayerShip = function() { 
-  this.setup('ship', {vx: 0, reloadTime: 0.25, maxVel: 200 });
-  health = 30;
+  this.setup('ship', { vx: 0, reloadTime: 0.25, maxVel: 200 });
+
   this.reload = this.reloadTime;
   this.x = Game.width/2 - this.w / 2;
   this.y = Game.height - Game.playerOffset - this.h;
@@ -155,78 +153,40 @@ var PlayerShip = function() {
     else if(Game.keys['right']) { this.vx = this.maxVel; }
     else { this.vx = 0; }
 */
-	if (!touchBool) {
-		Game.canvas.addEventListener('touchstart',function(event) {
-		  touchBool = true;
-		  touchMove(event);
-		  },true);
-    }
-	
+	Game.canvas.addEventListener('touchmove',this.touchMove,false);
+    
 	var touchMoveX;
 	  
-	var touchMove = function(evt) {
-	  Game.keys['fire'] = true;
+	this.touchMove = function(evt) {
       touch = evt.changedTouches[0];
     }
 	
 	if(typeof touch !== 'undefined') {
 	  touchMoveX = touch.pageX;
-	  var rawX = touchMoveX / Game.canvasMultiplier - Game.canvas.offsetLeft;
-	  rawX = Math.round(rawX) - (this.w/2);
-		
-	  if(rawX < Math.round(this.x)) {
-	  	vx = -400;
-	  } else if(rawX > Math.round(this.x)) {
-	  	vx = 400;
-	  }
-	  
-	  if ((Math.round(this.x) - rawX < 10 && Math.round(this.x) - rawX > -10) || ((rawX - Math.round(this.x) < 10 && rawX - Math.round(this.x) > -10) )) {
-	  	vx = 0;
-		
-		if(Game.keys['fire'] && this.reload < 0) {
-          Game.keys['fire'] = false;
-          this.reload = this.reloadTime;
-
-          this.board.add(new PlayerMissile(this.x+(this.w/2),this.y+this.h/2));
-         
-        }
-	  }
-	  
-	  this.x += vx * dt;
-	  	
-	  
-	  if(this.x < 0) { 
-	    this.x = 0;
-	  } else if(this.x > Game.width - this.w) { 
-      	this.x = Game.width - this.w;
-      }
-	  
-	  
-	  
+	  console.log(touchMoveX);
+	  this.x = touchMoveX / Game.canvasMultiplier - Game.canvas.offsetLeft;
 	} else {
-      
 	  this.x = Game.width/2 - this.w / 2;
 	}
 	
 
     this.reload-=dt;
-    
+    if(Game.keys['fire'] && this.reload < 0) {
+      Game.keys['fire'] = false;
+      this.reload = this.reloadTime;
+
+      this.board.add(new PlayerMissile(this.x,this.y+this.h/2));
+      this.board.add(new PlayerMissile(this.x+this.w,this.y+this.h/2));
+    }
   };
 };
 
 PlayerShip.prototype = new Sprite();
 PlayerShip.prototype.type = OBJECT_PLAYER;
 
-PlayerShip.prototype.hit = function() {
+PlayerShip.prototype.hit = function(damage) {
   if(this.board.remove(this)) {
-    if(health > 0){
-	  health -= 10;
-      this.board.remove(enemy.prototype);
-	} else {
-		this.board.add(new Explosion(this.x + this.w/2, 
-                                   this.y + this.h/2));
-		loseGame();
-	}
+    loseGame();
   }
 };
 
@@ -324,16 +284,8 @@ EnemyMissile.prototype.step = function(dt)  {
   this.y += this.vy * dt;
   var collision = this.board.collide(this,OBJECT_PLAYER)
   if(collision) {
-	health -= 10;
-    if(health > 0){
-	  this.board.add(new Explosion(this.x + this.w/2, 
-                                   this.y + this.h/2));
-      this.board.remove(this);
-	} else {
-		this.board.add(new Explosion(this.x + this.w/2, 
-                                   this.y + this.h/2));
-		loseGame();
-	}
+    collision.hit(this.damage);
+    this.board.remove(this);
   } else if(this.y > Game.height) {
       this.board.remove(this); 
   }
@@ -356,8 +308,6 @@ Explosion.prototype.step = function(dt) {
   }
 };
 
-window.addEventListener("load", function load(event){
-  touchBool = false;
-  window.removeEventListener("load", load, false);
-  Game.initialize("game","button",sprites,startGame);
+window.addEventListener("load", function() {
+  Game.initialize("game",sprites,startGame);
 });
