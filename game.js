@@ -6,7 +6,7 @@ var sprites = {
  enemy_cruz: { sx: 170, sy: 0, w: 26, h: 39, frames: 1 },
  enemy_trump: { sx: 196, sy: 0, w: 60, h: 23, frames: 1 },
  explosion: { sx: 0, sy: 68, w: 64, h: 64, frames: 12 },
- enemy_missile: { sx: 27, sy: 42, w: 20, h: 20, frame: 1, }
+ enemy_missile: { sx: 27, sy: 42, w: 20, h: 20, frame: 1 }
 };
 
 var enemies = {
@@ -70,7 +70,7 @@ var playGame = function() {
 
 var winGame = function() {
   Game.setBoard(3,new TitleScreen("You win!", 
-                                  "Press fire to play again",
+                                  "Now head over to the donation page!",
                                   playGame));
 };
 
@@ -221,7 +221,8 @@ PlayerShip.prototype.hit = function() {
   if(this.board.remove(this)) {
     if(health > 0){
 	  health -= 10;
-      this.board.remove(enemy.prototype);
+	  this.board.add(new Explosion(this.x + this.w/2, 
+                                   this.y + this.h/2));
 	} else {
 		this.board.add(new Explosion(this.x + this.w/2, 
                                    this.y + this.h/2));
@@ -277,8 +278,16 @@ Enemy.prototype.step = function(dt) {
 
   var collision = this.board.collide(this,OBJECT_PLAYER);
   if(collision) {
-    collision.hit(this.damage);
-    this.board.remove(this);
+	health -= 10;
+	if(health > 0){
+	  this.board.add(new Explosion(this.x + this.w/2, 
+                                   this.y + this.h/2));
+      this.board.remove(this);
+	} else {
+		this.board.add(new Explosion(this.x + this.w/2, 
+                                   this.y + this.h/2));
+		loseGame();
+	}
   }
 
   if(Math.random() < 0.01 && this.reload <= 0) {
