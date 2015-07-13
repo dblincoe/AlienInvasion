@@ -190,10 +190,9 @@ var SpriteSheet = new function() {
 };
 
 var TitleScreen = function TitleScreen(title,subtitle,callback) {
-  var up = false;
+  Game.keys['fire'] = false;
   this.step = function(dt) {
-    if(!Game.keys['fire']) up = true;
-    if(up && Game.keys['fire'] && callback) callback();
+    if(Game.keys['fire'] && callback) callback();
   };
 
   this.draw = function(ctx) {
