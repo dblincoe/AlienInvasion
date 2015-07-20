@@ -28,7 +28,7 @@ var Game = new function() {
   var boards = [];
 
   // Game Initialization
-  this.initialize = function(canvasElementId,buttonElementId,sprite_data,callback) {
+  this.initialize = function(canvasElementId,sprite_data,callback) {
     this.canvas = document.getElementById(canvasElementId);
 	
 
@@ -42,6 +42,7 @@ var Game = new function() {
     this.ctx = this.canvas.getContext && this.canvas.getContext('2d');
     if(!this.ctx) { return alert("Please upgrade your browser to play"); }
 
+	
     this.setupInput();
 
     this.loop(); 
@@ -60,19 +61,6 @@ var Game = new function() {
   this.keys = {};
 
   this.setupInput = function() {
-   /* window.addEventListener('keydown',function(e) {
-      if(KEY_CODES[e.keyCode]) {
-       Game.keys[KEY_CODES[e.keyCode]] = true;
-       e.preventDefault();
-      }
-    },false);
-
-    window.addEventListener('keyup',function(e) {
-      if(KEY_CODES[e.keyCode]) {
-       Game.keys[KEY_CODES[e.keyCode]] = false; 
-       e.preventDefault();
-      }
-    },false);*/
   };
 
 
@@ -81,7 +69,7 @@ var Game = new function() {
   // Game Loop
   this.loop = function() { 
     var curTime = new Date().getTime();
-    requestAnimationFrame(Game.loop);
+    myReq = requestAnimationFrame(Game.loop);
     var dt = (curTime - lastTime)/1000;
     if(dt > maxTime) { dt = maxTime; }
 
@@ -146,11 +134,14 @@ var SpriteSheet = new function() {
   
   this.sources = {
         image: '/RandInvader/images/sprites.png',
-        health: '/RandInvader/images/heart.png'
+        health: '/RandInvader/images/heart.png',
+	    rand: '/RandInvader/images/rand.png',
+	    exit: '/RandInvader/images/exit.png'
       };
 
   this.load = function(spriteData,callback) { 
     this.map = spriteData;
+	console.log(this.map);
 	this.images = {};
     var loadedImages = 0;
     var numImages = 0;
@@ -167,16 +158,16 @@ var SpriteSheet = new function() {
       };
       this.images[src].src = this.sources[src];
     };
-    /*this.image = new Image();
-    this.image.onload = callback;
-    this.image.src = 'images/sprites.png';
-	this.health = new Image();
-    this.health.onload = callback;
-    this.health.src = 'images/heart.png';*/
+    
   };
 
   this.draw = function(ctx,sprite,x,y,frame) {
-    var s = this.map[sprite];
+	if((roundNumber % 2) == 0) {
+  	  var spriteNull = "";
+    } else {
+   	  var spriteNull = roundNumber % 2;
+    }
+    var s = this.map['sprite' + spriteNull][sprite];
     if(!frame) frame = 0;
     ctx.drawImage(this.images.image,
                      s.sx + frame * s.w, 
@@ -189,22 +180,68 @@ var SpriteSheet = new function() {
   return this;
 };
 
-var TitleScreen = function TitleScreen(title,subtitle,callback) {
+var TitleScreen = function(title,subtitle,callback) {
   Game.keys['fire'] = false;
+  Game.canvas.addEventListener('touchstart',function(e) {
+  	touchBool = true;
+	console.log(e);
+	TitleScreen.pageX = e.targetTouches[0].pageX;
+	TitleScreen.pageY = e.targetTouches[0].pageY;
+  });
+
+  this.fillTextMultiLine = function(ctx, text, x, y) {
+    var lineHeight = ctx.measureText("M").width * 1.4;
+    var lines = text.split("\n");
+    for (var i = 0; i < lines.length; ++i) {
+      ctx.fillText(lines[i], x - ctx.measureText(lines[i]).width/2, y);
+      y += lineHeight;
+    }
+   }
+  
   this.step = function(dt) {
-    if(Game.keys['fire'] && callback) callback();
+    if(Game.keys['fire'] && TitleScreen.pageX > Game.width/2 - 40 && TitleScreen.pageX < Game.width/2 + 40 && TitleScreen.pageY > Game.height/2 -10 && TitleScreen.pageY < Game.height/2 + 30 && callback) { 
+	  Game.points = 0;
+	  roundNumber = 0;
+	  roundBegin = 0;
+	  callback();
+	} else if(TitleScreen.pageX > Game.width/2 - 70 && TitleScreen.pageX < Game.width/2 + 70 && TitleScreen.pageY > Game.height/2 + 60 && TitleScreen.pageY < Game.height/2 + 100) {
+		window.location.href = "https://secure.randpaul.com/";
+		window.cancelAnimationFrame(myReq);
+	} else if(TitleScreen.pageX > Game.width - 60 && TitleScreen.pageX < Game.width - 10 && TitleScreen.pageY > 10 && TitleScreen.pageY < 60) {
+		window.location.href = index.html;
+		window.cancelAnimationFrame(myReq);
+	}
   };
 
   this.draw = function(ctx) {
     ctx.fillStyle = "#FFFFFF";
 
-    ctx.font = "bold 22px bangers";
+    ctx.font = "bold 24px Arial";
     var measure = ctx.measureText(title);  
-    ctx.fillText(title,Game.width/2 - measure.width/2,Game.height/2);
+    this.fillTextMultiLine(ctx,title,Game.width/2,Game.height/2-140);
 
-    ctx.font = "bold 13px bangers";
+    ctx.font = "bold 17px Arial";
     var measure2 = ctx.measureText(subtitle);
-    ctx.fillText(subtitle,Game.width/2 - measure2.width/2,Game.height/2 + 40);
+    this.fillTextMultiLine(ctx,subtitle,Game.width/2,Game.height/2-70);
+	
+	ctx.fillStyle = "#C0C0C0";
+	ctx.fillRect(Game.width/2 - 50,Game.height/2 - 10,100,40);
+	ctx.fillStyle = "#FFFFFF";
+	ctx.font = '12px Arial';
+	ctx.fillText("PLAY AGAIN!",Game.width/2 - 37,Game.height/2 + 15);
+	  
+	ctx.fillStyle = "#FFFFFF";
+	ctx.fillRect(Game.width/2 - 70,Game.height/2 + 60,140,40);
+	ctx.fillStyle = "#000000";
+	ctx.font = 'bold 18px Arial';
+	ctx.fillText("DONATE NOW!",Game.width/2 - 62,Game.height/2 + 85);
+	  
+	ctx.drawImage(SpriteSheet.images.rand,
+                     	Game.width/2 - 51,
+	  				    Game.height - 100);
+	  
+	
+	
   };
 };
 
@@ -245,6 +282,7 @@ var GameBoard = function() {
       if(idx != -1) {
         this.cnt[this.removed[i].type]--;
         this.objects.splice(idx,1);
+		
       }
     }
   };
@@ -303,11 +341,16 @@ var GameBoard = function() {
 var Sprite = function() { };
 
 Sprite.prototype.setup = function(sprite,props) {
+  if((roundNumber % 2) == 0) {
+  	var spriteNull = "";
+  } else {
+  	var spriteNull = roundNumber % 2;
+  }
   this.sprite = sprite;
   this.merge(props);
   this.frame = this.frame || 0;
-  this.w =  SpriteSheet.map[sprite].w;
-  this.h =  SpriteSheet.map[sprite].h;
+  this.w =  SpriteSheet.map['sprite' + spriteNull][sprite].w;
+  this.h =  SpriteSheet.map['sprite' + spriteNull][sprite].h;
 };
 
 Sprite.prototype.merge = function(props) {
@@ -329,6 +372,7 @@ Sprite.prototype.hit = function(damage) {
 
 var Level = function(levelData,callback) {
   this.levelData = [];
+  levelData = shuffle(levelData);
   for(var i =0; i<levelData.length; i++) {
     this.levelData.push(Object.create(levelData[i]));
   }
@@ -416,24 +460,6 @@ var TouchControls = function() {
 
   this.trackTouch = function(ctx) {
     var touch, x, y;
-
-    
-
-    /*if(e.type == 'touchstart' || e.type == 'touchend') {
-      for(i=0;i<e.changedTouches.length;i++) {
-        touch = e.changedTouches[i];
-		
-        x = touch.pageX / Game.canvasMultiplier - Game.canvas.offsetLeft;
-        y = touch.pageY / Game.canvasMultiplier;
-		console.log(4 * unitWidth + " " + yLoc);
-		  console.log(Game.canvasMultiplier);
-		  console.log(e);
-		console.log(x + " : " + y);
-        if(x > 3 * unitWidth && y > yLoc/1.3) {
-          Game.keys['fire'] = (e.type == 'touchstart');
-        }
-      }
-    }*/
   };
 
 
@@ -445,9 +471,11 @@ var TouchControls = function() {
 
 
 var GamePoints = function() {
-  Game.points = 0;
-
   var pointsLength = 8;
+  
+  if(!Game.points) {
+  	Game.points = 0;
+  }
 
   this.draw = function(ctx) {
     ctx.save();
@@ -461,6 +489,10 @@ var GamePoints = function() {
     ctx.fillText(zeros + txt,10,20);
     ctx.restore();
 
+	ctx.drawImage(SpriteSheet.images.exit,
+                     	Game.width - 25,
+	  				    5);
+	
   };
 
   this.step = function(dt) { };
@@ -468,18 +500,68 @@ var GamePoints = function() {
 
 var ShipHealth = function() {
 	
-	/*this.load = function(callback) { 
-      this.image = new Image();
-      this.image.onload = callback;
-      this.image.src = 'images/heart.png';
-    };*/
-
 	this.draw = function(ctx) {
       var numOfLives = health/10;	
 	    for(var i=0; i<numOfLives;i++) {
-		  ctx.drawImage(SpriteSheet.images.health, window.innerWidth - 20 - (i*30), 10);
+		  ctx.drawImage(SpriteSheet.images.health, window.innerWidth - 55 - (i*30), 10);
 	    };
 	};
 
     this.step = function(dt) { };
 };
+
+var shuffle = function(array) {
+  var m = array.length-2, t, i;
+
+  var moveStyles = [
+		"step",
+		"ltr",
+		"circle",
+		"straight"
+		];
+	
+  var moveStylesLength = moveStyles.length, tmp, tmp1;
+  while (moveStylesLength)  {
+
+    // Pick a remaining element…
+    tmp = Math.floor(Math.random() * moveStylesLength--);
+
+    // And swap it with the current element.
+    tmp1 = moveStyles[moveStylesLength];
+    moveStyles[moveStylesLength] = moveStyles[tmp];
+    moveStyles[tmp] = tmp1;
+  }
+  // While there remain elements to shuffle…
+  while (m) {
+
+    // Pick a remaining element…
+    i = Math.floor(Math.random() * m--);
+
+    // And swap it with the current element.
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+  
+  for(var i=0; i<array.length-2; i++) {
+  	var timeDiff = array[i][1] - array[i][0];
+	
+	if(i == 0) {
+		array[i][0] = 0;
+		array[i][1] = timeDiff;
+	} else {
+		array[i][0] = array[i-1][1];
+		array[i][1] = array[i-1][1] + timeDiff + 1000;
+	} 
+  }
+  
+  var wiggleStart = array[array.length-3][1];
+  var wiggleDiff = array[array.length-2][1] - array[array.length-2][0];
+  
+  array[array.length-2][0] = wiggleStart;
+  array[array.length-2][1] = wiggleStart + wiggleDiff;
+  array[array.length-1][0] = wiggleStart;
+  array[array.length-1][1] = wiggleStart + wiggleDiff;
+  
+  return array;
+}

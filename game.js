@@ -1,24 +1,37 @@
-var sprites = {
- ship: { sx: 0, sy: 0, w: 50, h: 26, frames: 1 },
+var sprites = { sprite: {
+ ship: { sx: 0, sy: 0, w: 51, h: 26, frames: 1 },
  missile: { sx: 0, sy: 37, w: 12, h: 28, frames: 1 },
- enemy_jeb: { sx: 70, sy: 0, w: 50, h: 28, frames: 1 },
- enemy_hillary: { sx: 120, sy: 0, w: 50, h: 43, frames: 1 },
- enemy_cruz: { sx: 170, sy: 0, w: 26, h: 39, frames: 1 },
- enemy_trump: { sx: 196, sy: 0, w: 60, h: 23, frames: 1 },
+ enemy_1040: { sx: 51, sy: 0, w: 35, h: 50, frames: 1 },
+ enemy_28: { sx: 86, sy: 0, w:51, h: 26, frames: 1 },
+ enemy_tape: { sx: 136, sy: 0, w: 50, h: 34, frames: 1 },
+ enemy_396: { sx: 186, sy: 0, w: 49, h: 17, frames: 1 },
+ enemy_IRS: { sx: 235, sy: 0, w: 42, h: 50, frames: 1 },
  explosion: { sx: 0, sy: 68, w: 64, h: 64, frames: 12 },
- enemy_missile: { sx: 27, sy: 42, w: 20, h: 20, frame: 1 }
+ enemy_missile: { sx: 26, sy: 42, w: 20, h: 20, frame: 1 }
+},
+sprite1: {
+ ship: { sx: 0, sy: 0, w: 51, h: 26, frames: 1 },
+ missile: { sx: 0, sy: 37, w: 12, h: 28, frames: 1 },
+ enemy_1040: { sx: 277, sy: 0, w: 49, h: 28, frames: 1 },//JEB
+ enemy_28: { sx: 376, sy: 0, w: 25, h: 39, frames: 1 }, //CRUZ
+ enemy_tape: { sx: 376, sy: 0, w: 25, h: 39, frames: 1 },//CRUZ
+ enemy_396: { sx: 403, sy: 0, w: 60, h: 22, frames: 1 },//TRUMP
+ enemy_IRS: { sx: 327, sy: 0, w: 50, h: 42, frames: 1 },//Hillary
+ explosion: { sx: 0, sy: 68, w: 64, h: 64, frames: 12 },
+ enemy_missile: { sx: 28, sy: 42, w: 20, h: 20, frame: 1 }
+}
 };
 
 var enemies = {
-  straight: { x: 0,   y: -50, sprite: 'enemy_cruz', health: 10, 
+  straight: { x: 0,   y: -50, sprite: 'enemy_396', health: 10, 
               E: 100 },
-  ltr:      { x: 0,   y: -100, sprite: 'enemy_trump', health: 10, 
+  ltr:      { x: 0,   y: -100, sprite: 'enemy_28', health: 10, 
               B: 75, C: 1, E: 100, missiles: 1  },
-  circle:   { x: 250,   y: -50, sprite: 'enemy_cruz', health: 10, 
+  circle:   { x: 250,   y: -50, sprite: 'enemy_tape', health: 10, 
               A: 0,  B: -100, C: 1, E: 20, F: 100, G: 1, H: Math.PI/2 },
-  wiggle:   { x: 100, y: -50, sprite: 'enemy_hillary', health: 10, 
-              B: 50, C: 4, E: 100, firePercentage: 0.001, missiles: 1},
-  step:     { x: 0,   y: -50, sprite: 'enemy_jeb', health: 10,
+  wiggle:   { x: 100, y: -50, sprite: 'enemy_IRS', health: 10, 
+              B: 50, C: 4, E: 75, firePercentage: 0.001, missiles: 1},
+  step:     { x: 0,   y: -50, sprite: 'enemy_1040', health: 10,
               B: 150, C: 1.2, E: 75 }
 };
 
@@ -39,9 +52,7 @@ var startGame = function() {
     Game.setBoard(1,new Starfield(50,0.6,100));
     Game.setBoard(2,new Starfield(100,1.0,50));
   }  
-  /*Game.setBoard(3,new TitleScreen("Alien Invasion", 
-                                  "Press fire to start playing",
-                                  playGame));*/
+  
   playGame();
 };
 
@@ -50,11 +61,11 @@ var level1 = [
   [ 0,      4000,  500, 'step' ],
   [ 6000,   13000, 800, 'ltr' ],
   [ 10000,  16000, 400, 'circle' ],
-  [ 17800,  20000, 500, 'straight', { x: 50 } ],
-  [ 18200,  20000, 500, 'straight', { x: 90 } ],
+  [ 17800,  20000, 500, 'straight', { x: 60 } ],
+  [ 18200,  20000, 500, 'straight', { x: 110 } ],
   [ 18200,  20000, 500, 'straight', { x: 10 } ],
-  [ 22000,  25000, 400, 'wiggle', { x: 150 }],
-  [ 22000,  25000, 400, 'wiggle', { x: 100 }]
+  [ 22000,  30000, 800, 'wiggle', { x: 150 }],
+  [ 22000,  30000, 800, 'wiggle', { x: 100 }]
 ];
 
 
@@ -62,23 +73,65 @@ var level1 = [
 var playGame = function() {
   var board = new GameBoard();
   board.add(new PlayerShip());
-  board.add(new Level(level1,winGame));
-  Game.setBoard(3,board);
+  board.add(new Level(level1,NextRound));
+  if(roundBegin == 1){
+	  Game.setBoard(3,board);
+  } else {
+  	Game.setBoard(3, new NextRound());
+	roundbegin = 0;
+  }
   Game.setBoard(5,new GamePoints(0));
   Game.setBoard(6,new ShipHealth());
 };
 
-var winGame = function() {
-  Game.setBoard(3,new TitleScreen("You win!", 
-                                  "Now head over to the donation page!",
+var loseGame = function() {
+  if(roundNumber % 2 == 1) {
+    Game.setBoard(3,new TitleScreen("YOU HAVE NOT DEFEATED \n YOUR INFERIORS!", 
+                                  "Assuage your guilt by making \n a donation to the campaign!",
                                   playGame));
+  } else if(roundNumber % 2 == 0) {
+    Game.setBoard(3,new TitleScreen("YOU HAVE NOT DESTROYED \n THE TAX CODE!", 
+                                  "Assuage your guilt by making \n a donation to the campaign!",
+                                  playGame));
+  }
 };
 
-var loseGame = function() {
-  Game.setBoard(3,new TitleScreen("You have not defeated your inferiors!", 
-                                  "Assuage your guilt and make a donation to the campaign!",
-                                  playGame));
-};
+var advanceRound = function() {
+  
+  Game.setBoard(3, new NextRound());
+}
+
+var NextRound = function() {
+	var timeLeft = 3;
+	
+	if(!roundNumber){
+      roundNumber = 1;
+    } else {
+      roundNumber += 1;
+    }
+
+	
+	this.step = function(dt) {
+	  timeLeft -= dt;
+	  if(timeLeft < 0) {
+	  	roundBegin = 1;
+		playGame();
+	  }
+	};
+	
+	this.draw = function(ctx) {
+	  var round = "Round " + roundNumber;
+	  Game.ctx.fillStyle = "#FFFFFF";
+	  Game.ctx.font = "bold 30px Arial";
+      Game.ctx.fillText(round,Game.width/2 - Game.ctx.measureText(round).width/2,Game.height/2);
+	  if(roundNumber == 1){
+	  	var instructions = "Tap to move and shoot!";
+		Game.ctx.fillStyle = "#FFFFFF";
+	    Game.ctx.font = "bold 25px Arial";
+        Game.ctx.fillText(instructions,Game.width/2 - Game.ctx.measureText(instructions).width/2,Game.height/2 + 50);
+	  }
+	}
+}
 
 var Starfield = function(speed,opacity,numStars,clear) {
 
@@ -151,10 +204,7 @@ var PlayerShip = function() {
   
 
   this.step = function(dt) {
-	/*if(Game.keys['left']) { this.vx = -this.maxVel; }
-    else if(Game.keys['right']) { this.vx = this.maxVel; }
-    else { this.vx = 0; }
-*/
+	
 	if (!touchBool) {
 		Game.canvas.addEventListener('touchstart',function(event) {
 		  touchBool = true;
@@ -167,12 +217,19 @@ var PlayerShip = function() {
 	var touchMove = function(evt) {
 	  Game.keys['fire'] = true;
       touch = evt.changedTouches[0];
+	  touch1 = evt.targetTouches[0];
     }
 	
 	if(typeof touch !== 'undefined') {
+	  
+	  if(touch1.pageX > Game.width - 60 && touch1.pageX < Game.width - 10 && touch1.pageY > 10 && touch1.pageY < 60) {
+		window.location.href = index.html;
+		window.cancelAnimationFrame(myReq);
+	  }
 	  touchMoveX = touch.pageX;
 	  var rawX = touchMoveX / Game.canvasMultiplier - Game.canvas.offsetLeft;
 	  rawX = Math.round(rawX) - (this.w/2);
+	  
 		
 	  if(rawX < Math.round(this.x)) {
 	  	vx = -400;
@@ -290,7 +347,7 @@ Enemy.prototype.step = function(dt) {
 	}
   }
 
-  if(Math.random() < 0.01 && this.reload <= 0) {
+  if(Math.random() < (0.003*roundNumber) && this.reload <= 0) {
     this.reload = this.reloadTime;
     if(this.missiles == 2) {
       this.board.add(new EnemyMissile(this.x+this.w-2,this.y+this.h));
@@ -368,5 +425,7 @@ Explosion.prototype.step = function(dt) {
 window.addEventListener("load", function load(event){
   touchBool = false;
   window.removeEventListener("load", load, false);
-  Game.initialize("game","button",sprites,startGame);
+  roundNumber = 0;
+  roundBegin = 0;
+  Game.initialize("game",sprites,startGame);
 });
